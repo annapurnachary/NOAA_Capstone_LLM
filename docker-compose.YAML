@@ -1,0 +1,63 @@
+services:
+  # 1. Search Engine (Vector & Keyword Search)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: es-project
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  # 2. Database for User Feedback & Metrics
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-metrics
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+      POSTGRES_DB: project_metrics
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  # 3. Live Analytical Visualization Dashboard
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: grafana-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - postgres
+
+   # 4. Ingestion Workflow Orchestrator
+  kestra:
+    image: kestra/kestra:v0.18.0
+    container_name: kestra-orchestrator
+    user: "root"
+    command: server local
+    ports:
+      - "8080:8080"
+    environment:
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    volumes:
+      - kestra_data:/app/storage
+      - kestra_db:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp:/tmp
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+volumes:
+  es_data:
+  pg_data:
+  grafana_data:
+  kestra_data:
+  kestra_db:

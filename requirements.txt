@@ -1,0 +1,18 @@
+# Data Processing & Ingestion
+pandas>=2.0.0
+numpy>=1.24.0,<2.0.0
+
+# Search Engine Client
+elasticsearch>=8.15.0,<9.0.0
+
+# LLM Application & AI Embeddings
+openai>=1.0.0
+sentence-transformers>=2.2.2
+
+python-dotenv>=1.0.0
+
+# Application UI Front-End
+streamlit>=1.30.0
+
+# Monitoring Database Connector
+psycopg2-binary>=2.9.0

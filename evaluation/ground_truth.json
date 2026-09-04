@@ -1,0 +1,62 @@
+[
+  {
+    "query": "mainly d2 drought conditions persisted through january and into february",
+    "expected_id": "422180",
+    "category": "Drought"
+  },
+  {
+    "query": "the early winter season precipitation seemed to favor southwest colorado",
+    "expected_id": "423795",
+    "category": "Drought"
+  },
+  {
+    "query": "on january 1 long period swell from the pacific created",
+    "expected_id": "431896",
+    "category": "Sneakerwave"
+  },
+  {
+    "query": "an upper level system moved across the area bringing snow",
+    "expected_id": "424932",
+    "category": "Heavy Snow"
+  },
+  {
+    "query": "an upper level system moved across the northern plains bringing",
+    "expected_id": "424935",
+    "category": "Heavy Snow"
+  },
+  {
+    "query": "the early winter season precipitation seemed to favor southwest colorado",
+    "expected_id": "423801",
+    "category": "Drought"
+  },
+  {
+    "query": "the early winter season precipitation seemed to favor southwest colorado",
+    "expected_id": "423799",
+    "category": "Drought"
+  },
+  {
+    "query": "the early winter season precipitation seemed to favor southwest colorado",
+    "expected_id": "423798",
+    "category": "Drought"
+  },
+  {
+    "query": "the early winter season precipitation seemed to favor southwest colorado",
+    "expected_id": "423797",
+    "category": "Drought"
+  },
+  {
+    "query": "the early winter season precipitation seemed to favor southwest colorado",
+    "expected_id": "423789",
+    "category": "Drought"
+  },
+  {
+    "query": "snowfall amounts averaged 1 to 4 inches across southeast minnesota",
+    "expected_id": "423699",
+    "category": "Drought"
+  },
+  {
+    "query": "several storm systems brought generally light precipitation to eastern oklahoma",
+    "expected_id": "422596",
+    "category": "Drought"
+  }
+]

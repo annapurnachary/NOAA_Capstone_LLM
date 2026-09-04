@@ -1,0 +1,23 @@
+id: noaa_storm_data_pipeline
+namespace: dev.datatalks.project
+description: Ingests, processes, and indexes real NOAA weather vector embeddings into Elasticsearch on-demand.
+
+tasks:
+  - id: run_ingestion_script
+    type: io.kestra.plugin.scripts.python.Commands
+    containerImage: python:3.10-slim
+    
+    # ─── NESTED UNDER TASKRUNNER FOR MODERN KESTRA CONFIGURATIONS ───
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      volumes:
+        - /home/mkd/gitrepos/NOAA_Capstone_LLM:/app
+      
+    # Overrides localhost to route database calls securely through your Linux Docker bridge
+    env:
+      ELASTICSEARCH_URL: "http://docker.internal"
+      
+    commands:
+      - cd /app
+      - pip install --no-cache-dir -r requirements.txt
+      - python3 ingest.py
