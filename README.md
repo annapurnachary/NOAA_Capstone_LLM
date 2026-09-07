@@ -12,7 +12,7 @@ An end-to-end LLM Engineering Capstone Project built for the **DataTalks.Club LL
 * **Local Embedding Logic:** `sentence-transformers/all-MiniLM-L6-v2` (384 Dimensions) computed on CPU
 * **Metrics & Analytics Monitoring Database:** PostgreSQL 15 container tracking query feedback strings
 * **Live Reporting Dashboard Visualization:** Grafana 10.0.0 analytical time-series tracking panels3. **Analytics Tracking Panel Layer:** Open `http://localhost:3000` in your web browser to visually track user feedback metrics and system influx performance live on your Grafana dashboards.
-
+```text
        [ Raw NOAA Historical CSV Data ]
                       │
                       ▼
@@ -42,7 +42,7 @@ An end-to-end LLM Engineering Capstone Project built for the **DataTalks.Club LL
          │   (project_metrics DB)  │          │   (Live Visual Panels)  │
          └─────────────────────────┘          └─────────────────────────┘
 
-
+```
 ---
 
 
@@ -153,9 +153,7 @@ python3 src/ingest.py
 
 The ingestion workflow is orchestrated using Kestra.
 
-<p align="center">
-  <img src="screen_shots/Kestra-logs.png" width="900">
-</p>
+![Kestra Workflow](screen_shots/Kestra_logs.png)
 
 **Figure 2.** Kestra workflow used to extract, process, embed, and index NOAA weather records.
 
