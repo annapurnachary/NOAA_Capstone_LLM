@@ -5,21 +5,46 @@ An end-to-end LLM Engineering Capstone Project built for the **DataTalks.Club LL
 ---
 
 ## 🏗️ Project Architecture Layout
-1. **Orchestration Layer:** Run the **Kestra Flow** on-demand to process and bulk-load the raw NOAA weather vector maps directly into the Elasticsearch cluster network.
+1. **Orchestration Layer/ Ingestion Pipeline:** Run the **Kestra Flow** on-demand to process and bulk-load the raw NOAA weather vector maps directly into the Elasticsearch cluster network.Kestra Workflow Orchestrator running `src/ingest.py`
 2. **Interactive Front-End Layer:** Launch the user interface by running `streamlit run src/app.py` to ask questions and generate expert meteorology advice.
 * **User Interface Front-End:** Streamlit web application dashboard (`src/app.py`)
 * **Vector Search Engine:** Elasticsearch 8.15.0 running keyword (BM25) & Dense Vector (k-NN) matchers
 * **Local Embedding Logic:** `sentence-transformers/all-MiniLM-L6-v2` (384 Dimensions) computed on CPU
-* **Orchestration / Ingestion Pipeline:** Kestra Workflow Orchestrator running `src/ingest.py`
 * **Metrics & Analytics Monitoring Database:** PostgreSQL 15 container tracking query feedback strings
 * **Live Reporting Dashboard Visualization:** Grafana 10.0.0 analytical time-series tracking panels3. **Analytics Tracking Panel Layer:** Open `http://localhost:3000` in your web browser to visually track user feedback metrics and system influx performance live on your Grafana dashboards.
 
+       [ Raw NOAA Historical CSV Data ]
+                      │
+                      ▼
+         ┌─────────────────────────┐
+         │  Kestra Orchestrator    │
+         │     (ingest.py Flow)    │
+         └────────────┬────────────┘
+                      │
+                      │ (Local text vector embeddings generated via CPU)
+                      ▼
+         ┌─────────────────────────┐
+         │   Elasticsearch 8.x     │
+         │  (Hybrid Vector Index)  │
+         └────────────▲────────────┘
+                      │
+                      │ (Retrieves top-3 highly relevant matching weather logs)
+                      │
+         ┌────────────┴────────────┐          ┌─────────────────────────┐
+ User ──>│  Streamlit App UI       │<────────>│    OpenAI API Gateway   │
+         │       (app.py)          │          │      (gpt-4o-mini)      │
+         └────────────┬────────────┘          └─────────────────────────┘
+                      │
+                      │ (Logs thumbs-up/down satisfaction clicks & timestamps)
+                      ▼
+         ┌─────────────────────────┐          ┌─────────────────────────┐
+         │     PostgreSQL 15       │─────────>│    Grafana Dashboard    │
+         │   (project_metrics DB)  │          │   (Live Visual Panels)  │
+         └─────────────────────────┘          └─────────────────────────┘
+
+
 ---
 
-### 🛠️ Architecture Operational Overview
-1. **Orchestration Layer:** Run the **Kestra Flow** on-demand to process and bulk-load the raw NOAA weather vector maps directly into the Elasticsearch cluster network.
-2. **Interactive Front-End Layer:** Launch the user interface by running `streamlit run src/app.py` to ask questions and generate expert meteorology advice.
-3. **Analytics Tracking Panel Layer:** Open `http://localhost:3000` in your web browser to visually track user feedback metrics and system influx performance live on your Grafana dashboards.
 
 🧩 The Division of Labor in this RAG System
 *Kestra's Job (The Backend Ingestion Pipeline): It handles the automated extraction and heavy lifting. It reads your raw NOAA CSV files, computes the math text vector embeddings, and stores them inside your Elasticsearch database index shell. Once this is done, Kestra goes to sleep.
@@ -50,7 +75,7 @@ NOAA_Capstone_LLM/
 
 ## 🚀 Rapid Local Deployment Guide
 
-Follow this 3-step sequence to deploy the entire production stack locally:
+Follow this 4-step sequence to deploy the entire production stack locally:
 
 ### 1. Configure the Secrets Environment
 Create a file named `.env` in the project root folder directory and attach your OpenAI authorization key:
@@ -62,16 +87,56 @@ OPENAI_API_KEY=sk-proj-YOUR_SECRET_KEY_STRING_HERE
 Boot up your Docker containers in background detached mode using your system terminal window:
 ```bash
 docker compose -f docker-compose.YAML up -d
-```
-*Verify container availability by running `docker ps` or testing `curl http://localhost:9200`.*
 
-### 3. Initialize Python Packages & Index Data Files
+docker compose -f docker-compose.YAML ps
+
+Verify all these services are running::::
+
+NAME                  IMAGE                                                  COMMAND                  SERVICE         CREATED              STATUS              PORTS
+es-project            docker.elastic.co/elasticsearch/elasticsearch:8.15.0   "/bin/tini -- /usr/l…"   elasticsearch   About a minute ago   Up About a minute   0.0.0.0:9200->9200/tcp, [::]:9200->9200/tcp, 9300/tcp
+grafana-dashboard     grafana/grafana:10.0.0                                 "/run.sh"                grafana         About a minute ago   Up About a minute   0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp
+kestra-orchestrator   kestra/kestra:v0.18.0                                  "docker-entrypoint.s…"   kestra          About a minute ago   Up About a minute   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+postgres-metrics      postgres:15-alpine                                     "docker-entrypoint.s…"   postgres        About a minute ago   Up About a minute   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+```
+
+
+### 3. Run the Kestra workflow for ingesting the NOAA storm records.
+
+The project uses Kestra to orchestrate a containerized Python ingestion pipeline that loads NOAA Storm Data into Elasticsearch and generates semantic vector embeddings for downstream RAG and vector-search operations.
+
+The noaa_storm_data_pipeline flow executes a Python 3.10 task using the Kestra Docker Task Runner. The task mounts the raw NOAA dataset into the container as a read-only volume, installs the required Python dependencies, and connects to Elasticsearch through the host network.
+
+## The embedded ingest.py script performs the following steps:
+
+Loads the NOAA CSV dataset using Pandas.
+Validates the input file and prints schema/debug information.
+Detects the available NOAA narrative column (EPISODE_NARRATIVE or EVENT_NARRATIVE).
+Normalizes NOAA fields to id, state, event_type, and summary.
+Handles missing narrative values.
+Generates 384-dimensional semantic embeddings using all-MiniLM-L6-v2.
+Creates the Elasticsearch storm_data index with explicit mappings.
+Stores the original storm information together with its vector embedding.
+Uses Elasticsearch bulk indexing to efficiently insert the documents.
+
+The resulting Elasticsearch documents contain:
+id
+state
+event_type
+summary
+summary_vector
+The summary_vector field is configured as an Elasticsearch dense_vector with 384 dimensions and cosine similarity, enabling semantic/vector search in addition to traditional keyword search.
+
+****************************************************
+Or run the stand alone ingestion python script without kestra setup.
+ Initialize Python Packages & Index Data Files
 Install the locked package ranges and run the automated bulk data ingestion pipeline:
 ```bash
 pip3 install -r requirements.txt
 python3 src/ingest.py
 ```
 *The script will load the embedding models, build vector property maps, and store 2,000 real weather records.*
+
+
 
 ### 4. Boot Up the Dashboard Web Application
 Launch the Streamlit graphical user interface server to open your dashboard tab:
@@ -82,16 +147,15 @@ Open **`http://localhost:8501`** in your browser web views to execute searches a
 
 ---
 
-##sample questions you can ask in the Streamlit UI:
-*Question 1:Did any severe thunderstorm winds knock down trees or damage power lines?
+## sample questions you can ask in the Streamlit UI:
+*Question 1:What happened in January in Kansas?
 *Question 2:Where did heavy rainfall cause rivers or creeks to overflow their banks?
-*Question 3: Tell me about the heavy snow accumulation and blizzard conditions in New England
+*Question 3: Tell me about drought in Missouri
 *Question 4: Show me reports of subzero wind chills and freezing rain causing ice accumulation
 *Question 5: Did any severe thunderstorm winds knock down trees or damage power lines?
 *Question 6: Are there any logs of property damage caused by high wind gusts?
 *Question 7: Show me instances of flash flooding that trapped cars or submerged roads
 
-Question 6: Where did heavy rainfall cause rivers or creeks to overflow their banks?
 ## 📊 Rigorous Retrieval Evaluation Metrics
 To guarantee matching accuracy, a Ground Truth validation profile is ran against the hybrid index client to compute standard retrieval efficiency metrics:
 * **Metric Checked:** Retrieval Hit Rate Score (Top-5 return evaluations)
@@ -101,5 +165,54 @@ To guarantee matching accuracy, a Ground Truth validation profile is ran against
 ---
 
 ## 📈 Monitoring & Analytical Visualization Interfaces
-* **Kestra Flow Pipeline UI:** View automated schedules and cron triggers at `http://localhost:8080`.
+* **Postgres DB: docker exec -it postgres-metrics psql -U app_user -d project_metrics -c "SELECT * FROM user_feedback;"
 * **Grafana Metrics Interface:** Access live user satisfaction telemetry graphs at `http://localhost:3000` (User/Pass: `admin`/`admin`).
+
+
+## End-to-End Execution flow of Kestra
+1. User executes Kestra flow
+             │
+             ▼
+2. Kestra creates Docker task container
+             │
+             ▼
+3. ingest.py and requirements.txt are created
+             │
+             ▼
+4. NOAA Data/raw directory is mounted
+             │
+             ▼
+5. Python dependencies are installed
+             │
+             ▼
+6. Elasticsearch client is initialized
+             │
+             ▼
+7. all-MiniLM-L6-v2 model is loaded
+             │
+             ▼
+8. stormdata_2013.csv is read
+             │
+             ▼
+9. First 500 records are selected
+             │
+             ▼
+10. NOAA columns are normalized
+             │
+             ▼
+11. Missing summaries are handled
+             │
+             ▼
+12. Text embeddings are generated
+             │
+             ▼
+13. Elasticsearch index is recreated
+             │
+             ▼
+14. Documents + 384-D vectors are prepared
+             │
+             ▼
+15. Documents are bulk indexed
+             │
+             ▼
+16. storm_data index contains 500 documents

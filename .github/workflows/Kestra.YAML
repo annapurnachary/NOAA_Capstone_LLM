@@ -7,17 +7,116 @@ tasks:
     type: io.kestra.plugin.scripts.python.Commands
     containerImage: python:3.10-slim
     
-    # ─── NESTED UNDER TASKRUNNER FOR MODERN KESTRA CONFIGURATIONS ───
+    # ─── EXTRACTION LOCK FOR OPEN SOURCE KESTRA EDITIONS ───
+    # Generates files dynamically inside the isolated container sandbox
+    inputFiles:
+      # 1. Automatically writes your Python database script
+      ingest.py: |
+        import os
+        import pandas as pd
+        from elasticsearch import Elasticsearch, helpers
+        from sentence_transformers import SentenceTransformer
+
+        ELASTIC_HOST = os.getenv("ELASTICSEARCH_URL", "http://localhost:9200")
+        es = Elasticsearch(ELASTIC_HOST)
+        INDEX_NAME = "storm_data"
+
+        print("Loading local vector embedding model inside container...")
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+
+        def create_clean_index():
+            try:
+                es.indices.delete(index=INDEX_NAME)
+                print(f"Removed old index '{INDEX_NAME}' to ensure fresh load...")
+            except Exception:
+                pass
+                
+            mappings = {
+                "properties": {
+                    "id": {"type": "keyword"},
+                    "state": {"type": "keyword"},
+                    "event_type": {"type": "keyword"},
+                    "summary": {"type": "text"},
+                    "summary_vector": {
+                        "type": "dense_vector",
+                        "dims": 384,
+                        "index": True,
+                        "similarity": "cosine"
+                    }
+                }
+            }
+            es.indices.create(index=INDEX_NAME, mappings=mappings)
+            print(f"Created index layout: '{INDEX_NAME}'")
+
+        def load_and_bulk_index(csv_path):
+            if not os.path.exists(csv_path):
+                raise FileNotFoundError(f"Missing CSV file! Path: {csv_path}")
+
+            print(f"Reading dataset: {csv_path} ...")
+            df = pd.read_csv(csv_path)
+            print(f"CSV shape: {df.shape}")
+            print(f"CSV columns: {df.columns.tolist()}")
+            print(f"First 3 rows:\n{df.head(3)}")
+            df = df.head(500).reset_index(drop=True)
+            if 'EPISODE_NARRATIVE' in df.columns:
+                summary_col = 'EPISODE_NARRATIVE'
+            elif 'EVENT_NARRATIVE' in df.columns:
+                summary_col = 'EVENT_NARRATIVE'
+            else:
+                summary_col = df.select_dtypes(include=['object']).columns[0]
+                
+            df = df.rename(columns={
+                'EVENT_ID': 'id',
+                'STATE': 'state',
+                'EVENT_TYPE': 'event_type',
+                summary_col: 'summary'
+            })
+            
+            df['summary'] = df['summary'].fillna('')
+           
+
+            print("Generating vector text embeddings...")
+            summaries = df['summary'].tolist()
+            vectors = model.encode(summaries, show_progress_bar=True)
+
+            actions = []
+            for idx, row in df.iterrows():
+                doc_id = str(row.get('id', idx))
+                doc = {
+                    "_index": INDEX_NAME,
+                    "_id": doc_id,
+                    "_source": {
+                        "id": doc_id,
+                        "state": str(row.get('state', 'Unknown')),
+                        "event_type": str(row.get('event_type', 'Unknown')),
+                        "summary": str(row.get('summary', '')),
+                        "summary_vector": vectors[idx].tolist()
+                    }
+                }
+                actions.append(doc)
+                
+            print(f"Streaming packets to host bridge...")
+            success, errors = helpers.bulk(es, actions)
+            print(f"🎉 Success! Indexed {success} records via Kestra.")
+
+       
+        if __name__ == "__main__":
+           create_clean_index()
+           load_and_bulk_index("/data/raw/stormdata_2013.csv")
+
+    
+      requirements.txt: |
+        pandas>=2.0.0
+        numpy>=1.24.0,<2.0.0
+        elasticsearch>=8.15.0,<9.0.0
+        sentence-transformers>=2.7.0
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
+      networkMode: host
       volumes:
-        - /home/mkd/gitrepos/NOAA_Capstone_LLM:/app
-      
-    # Overrides localhost to route database calls securely through your Linux Docker bridge
+        - /home/mkd/gitrepos/NOAA_Capstone_LLM/Data/raw:/data/raw:ro
     env:
-      ELASTICSEARCH_URL: "http://docker.internal"
-      
+      ELASTICSEARCH_URL: http://localhost:9200
     commands:
-      - cd /app
       - pip install --no-cache-dir -r requirements.txt
       - python3 ingest.py

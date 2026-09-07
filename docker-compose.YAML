@@ -38,23 +38,36 @@ services:
     depends_on:
       - postgres
 
-   # 4. Ingestion Workflow Orchestrator
+  # 4. Ingestion Workflow Orchestrator
   kestra:
     image: kestra/kestra:v0.18.0
     container_name: kestra-orchestrator
     user: "root"
     command: server local
+
     ports:
       - "8080:8080"
+
     environment:
       JAVA_OPTS: "-Xms256m -Xmx512m"
+
+      KESTRA_CONFIGURATION: |
+        kestra:
+          plugins:
+            configurations:
+              - type: io.kestra.plugin.scripts.runner.docker.Docker
+                values:
+                  volume-enabled: true
+
     volumes:
       - kestra_data:/app/storage
       - kestra_db:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp:/tmp
+
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      host.docker.internal: host-gateway
+
 volumes:
   es_data:
   pg_data:
