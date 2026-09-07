@@ -47,10 +47,10 @@ An end-to-end LLM Engineering Capstone Project built for the **DataTalks.Club LL
 
 
 🧩 The Division of Labor in this RAG System
-*Kestra's Job (The Backend Ingestion Pipeline): It handles the automated extraction and heavy lifting. It reads your raw NOAA CSV files, computes the math text vector embeddings, and stores them inside your Elasticsearch database index shell. Once this is done, Kestra goes to sleep.
-*Streamlit's Job (src/app.py - The Application Engine): This stays running continuously on your computer. It waits for a user to type a question, queries Elasticsearch to fetch the text Kestra stored, communicates with OpenAI to generate an answer, and listens for the user to click the 👍 Yes or 👎 No button.
-*PostgreSQL's Job (The Telemetry Vault): The moment a user clicks a button in your Streamlit app, your Python code sends that event packet directly to your Postgres database container, inserting a new log row.
-*Grafana's Job (The Visual Analytics Window): It constantly watches your Postgres database table. Whenever a new row is added by Streamlit, Grafana instantly updates your Pie chart and Time-Series line graph dashboards automatically.
+* Kestra's Job (The Backend Ingestion Pipeline): It handles the automated extraction and heavy lifting. It reads your raw NOAA CSV files, computes the math text vector embeddings, and stores them inside your Elasticsearch database index shell. Once this is done, Kestra goes to sleep.
+* Streamlit's Job (src/app.py - The Application Engine): This stays running continuously on your computer. It waits for a user to type a question, queries Elasticsearch to fetch the text Kestra stored, communicates with OpenAI to generate an answer, and listens for the user to click the 👍 Yes or 👎 No button.
+* PostgreSQL's Job (The Telemetry Vault): The moment a user clicks a button in your Streamlit app, your Python code sends that event packet directly to your Postgres database container, inserting a new log row.
+* Grafana's Job (The Visual Analytics Window): It constantly watches your Postgres database table. Whenever a new row is added by Streamlit, Grafana instantly updates your Pie chart and Time-Series line graph dashboards automatically.
 
 ## 📂 Repository Directory Tree
 ```text
@@ -163,7 +163,7 @@ Launch the Streamlit graphical user interface server to open your dashboard tab:
 streamlit run src/app.py
 ```
 Open **`http://localhost:8501`** in your browser web views to execute searches and test buttons!
-
+![Streamlit UI](screen_shots/Streamlit_with_feedback_buttons.png)
 ---
 
 ## sample questions you can ask in the Streamlit UI:
@@ -177,7 +177,7 @@ Open **`http://localhost:8501`** in your browser web views to execute searches a
 
 ## 📊 Rigorous Retrieval Evaluation Metrics
 To guarantee matching accuracy, a Ground Truth validation profile is ran against the hybrid index client to compute standard retrieval efficiency metrics:
-* **Metric Checked:** Retrieval Hit Rate Score (Top-5 return evaluations)
+* **Metric Checked:** Retrieval Hit Rate Score (Top-3 return evaluations)
 * **Execution:** Run `python3 src/evaluate.py` to calculate baseline telemetry.
 * **System Result:** **100.00% Hit Rate Accuracy** achieved over production database keys.
 
@@ -185,12 +185,13 @@ To guarantee matching accuracy, a Ground Truth validation profile is ran against
 
 ## 📈 Monitoring & Analytical Visualization Interfaces
 * **Postgres DB: docker exec -it postgres-metrics psql -U app_user -d project_metrics -c "SELECT * FROM user_feedback;"
+![Postgres Records](screen_shots/postgres_stored.png)
 * **Grafana Metrics Interface:** Access live user satisfaction telemetry graphs at `http://localhost:3000` (User/Pass: `admin`/`admin`).
 ## 📊 Monitoring Dashboard
 
 The project collects user feedback in PostgreSQL and visualizes application activity through Grafana.
 
-![Grafana Dashboard](screen_shots/Grafana-dashboards.png)
+![Grafana Dashboard](screen_shots/Grafana_dashboards.png)
 
 ## End-to-End Execution flow of Kestra
 1. User executes Kestra flow
