@@ -118,6 +118,55 @@ postgres-metrics      postgres:15-alpine                                     "do
 The project uses Kestra to orchestrate a containerized Python ingestion pipeline that loads NOAA Storm Data into Elasticsearch and generates semantic vector embeddings for downstream RAG and vector-search operations.
 
 The noaa_storm_data_pipeline flow executes a Python 3.10 task using the Kestra Docker Task Runner. The task mounts the raw NOAA dataset into the container as a read-only volume, installs the required Python dependencies, and connects to Elasticsearch through the host network.
+## End-to-End Execution flow of Kestra
+1. User executes Kestra flow
+             │
+             ▼
+2. Kestra creates Docker task container
+             │
+             ▼
+3. ingest.py and requirements.txt are created
+             │
+             ▼
+4. NOAA Data/raw directory is mounted
+             │
+             ▼
+5. Python dependencies are installed
+             │
+             ▼
+6. Elasticsearch client is initialized
+             │
+             ▼
+7. all-MiniLM-L6-v2 model is loaded
+             │
+             ▼
+8. stormdata_2013.csv is read
+             │
+             ▼
+9. First 500 records are selected
+             │
+             ▼
+10. NOAA columns are normalized
+             │
+             ▼
+11. Missing summaries are handled
+             │
+             ▼
+12. Text embeddings are generated
+             │
+             ▼
+13. Elasticsearch index is recreated
+             │
+             ▼
+14. Documents + 384-D vectors are prepared
+             │
+             ▼
+15. Documents are bulk indexed
+             │
+             ▼
+16. storm_data index contains 500 documents
+
+
 
 ## The embedded ingest.py script performs the following steps:
 
@@ -140,7 +189,9 @@ summary_vector
 The summary_vector field is configured as an Elasticsearch dense_vector with 384 dimensions and cosine similarity, enabling semantic/vector search in addition to traditional keyword search.
 
 ****************************************************
-Or run the stand alone ingestion python script without kestra setup.
+
+The project maintains a standalone ingestion script for local development/testing, while the Kestra workflow embeds the ingestion logic directly into the task using inputFiles. This allows the orchestrated pipeline to execute independently inside its Docker task environment.
+* **How to  run the stand alone ingestion python script without kestra setup.
  Initialize Python Packages & Index Data Files
 Install the locked package ranges and run the automated bulk data ingestion pipeline:
 ```bash
@@ -193,51 +244,65 @@ The project collects user feedback in PostgreSQL and visualizes application acti
 
 ![Grafana Dashboard](screen_shots/Grafana_dashboards.png)
 
-## End-to-End Execution flow of Kestra
-1. User executes Kestra flow
-             │
-             ▼
-2. Kestra creates Docker task container
-             │
-             ▼
-3. ingest.py and requirements.txt are created
-             │
-             ▼
-4. NOAA Data/raw directory is mounted
-             │
-             ▼
-5. Python dependencies are installed
-             │
-             ▼
-6. Elasticsearch client is initialized
-             │
-             ▼
-7. all-MiniLM-L6-v2 model is loaded
-             │
-             ▼
-8. stormdata_2013.csv is read
-             │
-             ▼
-9. First 500 records are selected
-             │
-             ▼
-10. NOAA columns are normalized
-             │
-             ▼
-11. Missing summaries are handled
-             │
-             ▼
-12. Text embeddings are generated
-             │
-             ▼
-13. Elasticsearch index is recreated
-             │
-             ▼
-14. Documents + 384-D vectors are prepared
-             │
-             ▼
-15. Documents are bulk indexed
-             │
-             ▼
-16. storm_data index contains 500 documents
+## Future imrovements/Limitations of this project
+## ⚠️ Limitations
 
+While the NOAA Extreme Weather RAG Advisor provides an end-to-end RAG workflow, there are several areas that could be improved:
+
+### 1. Limited Dataset Scope
+
+The current implementation uses a subset of NOAA storm-event records rather than the complete historical NOAA dataset. Expanding the ingestion pipeline to process a larger and continuously updated dataset would improve coverage and make the system more useful for broader weather-related queries.
+
+### 2. Retrieval Evaluation Coverage
+
+The current evaluation focuses primarily on whether the expected document is retrieved. This does not fully measure ranking quality, semantic relevance, or the usefulness of the retrieved context.
+
+Future evaluation could include metrics such as **Precision@K, Recall@K, MRR, and NDCG**, along with a comparison of BM25, vector, and hybrid retrieval strategies.
+
+### 3. LLM Answer Evaluation
+
+The current project evaluates retrieval but has limited automated evaluation of the final LLM-generated answers.
+
+A future version could use an LLM-as-a-judge framework to evaluate **answer relevance, correctness, completeness, and faithfulness to the retrieved NOAA evidence**.
+
+### 4. No Dedicated Re-ranking Stage
+
+The current retrieval pipeline uses Elasticsearch keyword and dense-vector search but does not include a dedicated cross-encoder or other re-ranking model.
+
+Adding a re-ranking stage could improve the ordering and relevance of the final retrieved documents, especially for more complex queries.
+
+### 5. Query Rewriting
+
+The current system sends the user's original query to the retrieval layer. Future versions could introduce query rewriting or query expansion to handle ambiguous, conversational, or poorly phrased questions more effectively.
+
+### 6. Local Deployment
+
+The current application is primarily designed for local execution using Docker Compose. A production deployment on a cloud platform would provide better accessibility, scalability, and availability.
+
+### 7. Scalability
+
+The current architecture has been designed and tested at a relatively small scale. Processing millions of weather records would require additional considerations around embedding generation, Elasticsearch capacity, indexing strategy, caching, and infrastructure scaling.
+
+### 8. Limited Observability
+
+The project currently captures user feedback and provides Grafana-based monitoring. More detailed production observability could include latency tracking, retrieval statistics, token usage, LLM cost, error rates, and search performance.
+
+---
+
+## 🚀 Future Improvements
+
+The following improvements are planned or could be explored in future versions:
+
+* **Expand NOAA coverage** by ingesting a larger and regularly updated collection of weather records.
+* **Compare retrieval strategies** using BM25, dense vector, and hybrid search with standardized retrieval metrics.
+* **Add LLM evaluation** using an automated evaluation framework and an LLM-as-a-judge approach.
+* **Introduce document re-ranking** using a cross-encoder or other re-ranking model.
+* **Implement query rewriting** to improve retrieval for complex or conversational questions.
+* **Add response citations** that allow users to trace each generated answer back to the underlying NOAA records.
+* **Improve observability** by monitoring response latency, retrieval latency, token usage, errors, and LLM cost.
+* **Add caching** for frequently repeated queries and embeddings to reduce latency and API costs.
+* **Deploy to the cloud** to make the application publicly accessible and demonstrate production deployment.
+* **Improve the user interface** with filters for date, location, event type, severity, and other NOAA attributes.
+* **Add automated CI/CD testing** for the ingestion, retrieval, evaluation, and application components.
+* **Containerize the complete application stack**, including the Streamlit application, so that the entire system can be started with a single Docker Compose command.
+* **Explore more advanced RAG techniques**, such as multi-query retrieval, metadata filtering, contextual compression, and agentic retrieval.
