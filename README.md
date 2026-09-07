@@ -55,20 +55,33 @@ An end-to-end LLM Engineering Capstone Project built for the **DataTalks.Club LL
 ## 📂 Repository Directory Tree
 ```text
 NOAA_Capstone_LLM/
+├── .github/
+│   └── workflows/
+│       └── kastra.YAML             # CI/CD pipeline automation for testing or deployment
 ├── Data/
-│   └── raw/
+│   ├── processed/                  # Transformed or feature-engineered datasets ready for model ingestion
+│   └── raw/                        # Immutable, baseline historical weather observations
+│       ├── storm_data_2025_test.csv# Out-of-sample forward testing dataset
 │       └── stormdata_2013.csv      # Clean production NOAA source weather logs
 ├── evaluation/
 │   └── ground_truth.json           # Automated index validation target queries
+├── screen_shots/                   # Visual captures and interface documentation assets
 ├── src/
+│   ├── __pycache__/                # Cached compiled bytecode files for optimized execution
+│   ├── __init__.py                 # Packages the directory as a clean Python module
 │   ├── app.py                      # Master Streamlit dashboard UI app file
-│   ├── search.py                   # Clean Hybrid text/vector retrieval query logic
-│   ├── ingest.py                   # Schema translation & bulk vector index loader
+│   ├── check_pg.py                 # Health-check script validating PostgreSQL/pgvector backend readiness
 │   ├── evaluate.py                 # Retrieval accuracy validation script
+│   ├── generate_truth.py           # Automated evaluation dataset synthetics generation script
+│   ├── search.py                   # Clean Hybrid text/vector retrieval query logic
 │   └── seed_metrics.py             # Diagnostic dashboard graph metric simulator
 ├── .env                            # Local hidden environment API variables
-├── requirements.txt                # Fixed application dependency ranges
-└── docker-compose.YAML             # Full container network orchestration blueprint
+├── .gitignore                      # Specified unversioned untracked files to ignore
+├── docker-compose.YAML             # Full container network orchestration blueprint
+├── ingest.py                       # Schema translation & bulk vector index loader
+├── README.md                       # Core project documentation and execution blueprint
+└── requirements.txt                # Fixed application dependency ranges
+
 ```
 
 ---
@@ -136,7 +149,15 @@ python3 src/ingest.py
 ```
 *The script will load the embedding models, build vector property maps, and store 2,000 real weather records.*
 
+## ⚙️ Kestra Ingestion Pipeline
 
+The ingestion workflow is orchestrated using Kestra.
+
+<p align="center">
+  <img src="screen_shots/Kestra-logs.png" width="900">
+</p>
+
+**Figure 2.** Kestra workflow used to extract, process, embed, and index NOAA weather records.
 
 ### 4. Boot Up the Dashboard Web Application
 Launch the Streamlit graphical user interface server to open your dashboard tab:
@@ -148,13 +169,13 @@ Open **`http://localhost:8501`** in your browser web views to execute searches a
 ---
 
 ## sample questions you can ask in the Streamlit UI:
-*Question 1:What happened in January in Kansas?
-*Question 2:Where did heavy rainfall cause rivers or creeks to overflow their banks?
-*Question 3: Tell me about drought in Missouri
-*Question 4: Show me reports of subzero wind chills and freezing rain causing ice accumulation
-*Question 5: Did any severe thunderstorm winds knock down trees or damage power lines?
-*Question 6: Are there any logs of property damage caused by high wind gusts?
-*Question 7: Show me instances of flash flooding that trapped cars or submerged roads
+* Question 1:What happened in January in Kansas?
+* Question 2:Where did heavy rainfall cause rivers or creeks to overflow their banks?
+* Question 3: Tell me about drought in Missouri
+* Question 4: Show me reports of subzero wind chills and freezing rain causing ice accumulation
+* Question 5: Did any severe thunderstorm winds knock down trees or damage power lines?
+* Question 6: Are there any logs of property damage caused by high wind gusts?
+* Question 7: Show me instances of flash flooding that trapped cars or submerged roads
 
 ## 📊 Rigorous Retrieval Evaluation Metrics
 To guarantee matching accuracy, a Ground Truth validation profile is ran against the hybrid index client to compute standard retrieval efficiency metrics:
@@ -167,7 +188,11 @@ To guarantee matching accuracy, a Ground Truth validation profile is ran against
 ## 📈 Monitoring & Analytical Visualization Interfaces
 * **Postgres DB: docker exec -it postgres-metrics psql -U app_user -d project_metrics -c "SELECT * FROM user_feedback;"
 * **Grafana Metrics Interface:** Access live user satisfaction telemetry graphs at `http://localhost:3000` (User/Pass: `admin`/`admin`).
+## 📊 Monitoring Dashboard
 
+The project collects user feedback in PostgreSQL and visualizes application activity through Grafana.
+
+![Grafana Dashboard](screen_shots/Grafana-dashboards.png)
 
 ## End-to-End Execution flow of Kestra
 1. User executes Kestra flow
@@ -216,3 +241,4 @@ To guarantee matching accuracy, a Ground Truth validation profile is ran against
              │
              ▼
 16. storm_data index contains 500 documents
+
