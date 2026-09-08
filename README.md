@@ -1,10 +1,10 @@
-# ⛈️ NOAA Extreme Weather RAG Advisor
+### ⛈️ NOAA Extreme Weather RAG Advisor
 
 An end-to-end LLM Engineering Capstone Project built for the **DataTalks.Club LLM Zoomcamp**. This system is an intelligent Search & Analysis Advisor that ingests historical NOAA extreme weather logs, runs hybrid semantic vector matching, passes context to an LLM for expert narrative breakdown, and tracks real-time user feedback metrics.
 
 ---
 
-## 🏗️ Project Architecture Layout
+### 🏗️ Project Architecture Layout
 1. **Orchestration Layer/ Ingestion Pipeline:** Run the **Kestra Flow** on-demand to process and bulk-load the raw NOAA weather vector maps directly into the Elasticsearch cluster network.Kestra Workflow Orchestrator running `src/ingest.py`
 2. **Interactive Front-End Layer:** Launch the user interface by running `streamlit run src/app.py` to ask questions and generate expert meteorology advice.
 * **User Interface Front-End:** Streamlit web application dashboard (`src/app.py`)
@@ -46,13 +46,13 @@ An end-to-end LLM Engineering Capstone Project built for the **DataTalks.Club LL
 ---
 
 
-🧩 The Division of Labor in this RAG System
+#🧩 The Division of Labor in this RAG System
 * Kestra's Job (The Backend Ingestion Pipeline): It handles the automated extraction and heavy lifting. It reads your raw NOAA CSV files, computes the math text vector embeddings, and stores them inside your Elasticsearch database index shell. Once this is done, Kestra goes to sleep.
 * Streamlit's Job (src/app.py - The Application Engine): This stays running continuously on your computer. It waits for a user to type a question, queries Elasticsearch to fetch the text Kestra stored, communicates with OpenAI to generate an answer, and listens for the user to click the 👍 Yes or 👎 No button.
 * PostgreSQL's Job (The Telemetry Vault): The moment a user clicks a button in your Streamlit app, your Python code sends that event packet directly to your Postgres database container, inserting a new log row.
 * Grafana's Job (The Visual Analytics Window): It constantly watches your Postgres database table. Whenever a new row is added by Streamlit, Grafana instantly updates your Pie chart and Time-Series line graph dashboards automatically.
 
-## 📂 Repository Directory Tree
+### 📂 Repository Directory Tree
 ```text
 NOAA_Capstone_LLM/
 ├── .github/
@@ -86,17 +86,17 @@ NOAA_Capstone_LLM/
 
 ---
 
-## 🚀 Rapid Local Deployment Guide
+### 🚀 Rapid Local Deployment Guide
 
 Follow this 4-step sequence to deploy the entire production stack locally:
 
-### 1. Configure the Secrets Environment
+## 1. Configure the Secrets Environment
 Create a file named `.env` in the project root folder directory and attach your OpenAI authorization key:
 ```text
 OPENAI_API_KEY=sk-proj-YOUR_SECRET_KEY_STRING_HERE
 ```
 
-### 2. Launch the Database Cluster Infrastructure
+## 2. Launch the Database Cluster Infrastructure
 Boot up your Docker containers in background detached mode using your system terminal window:
 ```bash
 docker compose -f docker-compose.YAML up -d
@@ -113,12 +113,12 @@ postgres-metrics      postgres:15-alpine                                     "do
 ```
 
 
-### 3. Run the Kestra workflow for ingesting the NOAA storm records.
+## 3. Run the Kestra workflow for ingesting the NOAA storm records.
 
 The project uses Kestra to orchestrate a containerized Python ingestion pipeline that loads NOAA Storm Data into Elasticsearch and generates semantic vector embeddings for downstream RAG and vector-search operations.
 
 The noaa_storm_data_pipeline flow executes a Python 3.10 task using the Kestra Docker Task Runner. The task mounts the raw NOAA dataset into the container as a read-only volume, installs the required Python dependencies, and connects to Elasticsearch through the host network.
-## End-to-End Execution flow of Kestra
+# End-to-End Execution flow of Kestra
 1. User executes Kestra flow
              │
              ▼
@@ -170,14 +170,14 @@ The noaa_storm_data_pipeline flow executes a Python 3.10 task using the Kestra D
 
 ## The embedded ingest.py script performs the following steps:
 
-Loads the NOAA CSV dataset using Pandas.
-Validates the input file and prints schema/debug information.
-Detects the available NOAA narrative column (EPISODE_NARRATIVE or EVENT_NARRATIVE).
-Normalizes NOAA fields to id, state, event_type, and summary.
-Handles missing narrative values.
-Generates 384-dimensional semantic embeddings using all-MiniLM-L6-v2.
-Creates the Elasticsearch storm_data index with explicit mappings.
-Stores the original storm information together with its vector embedding.
+* Loads the NOAA CSV dataset using Pandas.
+* Validates the input file and prints schema/debug information.
+* Detects the available NOAA narrative column (EPISODE_NARRATIVE or EVENT_NARRATIVE).
+* Normalizes NOAA fields to id, state, event_type, and summary.
+* Handles missing narrative values.
+* Generates 384-dimensional semantic embeddings using all-MiniLM-L6-v2.
+* Creates the Elasticsearch storm_data index with explicit mappings.
+* Stores the original storm information together with its vector embedding.
 Uses Elasticsearch bulk indexing to efficiently insert the documents.
 
 The resulting Elasticsearch documents contain:
@@ -200,7 +200,7 @@ python3 src/ingest.py
 ```
 *The script will load the embedding models, build vector property maps, and store 2,000 real weather records.*
 
-## ⚙️ Kestra Ingestion Pipeline
+# ⚙️ Kestra Ingestion Pipeline
 
 The ingestion workflow is orchestrated using Kestra.
 
@@ -208,7 +208,7 @@ The ingestion workflow is orchestrated using Kestra.
 
 **Figure 2.** Kestra workflow used to extract, process, embed, and index NOAA weather records.
 
-### 4. Boot Up the Dashboard Web Application
+## 4. Boot Up the Dashboard Web Application
 Launch the Streamlit graphical user interface server to open your dashboard tab:
 ```bash
 streamlit run src/app.py
@@ -217,7 +217,7 @@ Open **`http://localhost:8501`** in your browser web views to execute searches a
 ![Streamlit UI](screen_shots/Streamlit_with_feedback_buttons.png)
 ---
 
-## sample questions you can ask in the Streamlit UI:
+# sample questions you can ask in the Streamlit UI:
 * Question 1:Summarize the NOAA storm events in the dataset.
 * Question 2:Where did heavy rainfall cause rivers or creeks to overflow their banks?
 * Question 3: Tell me about drought in Missouri
@@ -245,45 +245,45 @@ The project collects user feedback in PostgreSQL and visualizes application acti
 ![Grafana Dashboard](screen_shots/Grafana_dashboards.png)
 
 ## Future imrovements/Limitations of this project
-## ⚠️ Limitations
+# ⚠️ Limitations
 
 While the NOAA Extreme Weather RAG Advisor provides an end-to-end RAG workflow, there are several areas that could be improved:
 
-### 1. Limited Dataset Scope
+# 1. Limited Dataset Scope
 
 The current implementation uses a subset of NOAA storm-event records rather than the complete historical NOAA dataset. Expanding the ingestion pipeline to process a larger and continuously updated dataset would improve coverage and make the system more useful for broader weather-related queries.
 
-### 2. Retrieval Evaluation Coverage
+# 2. Retrieval Evaluation Coverage
 
 The current evaluation focuses primarily on whether the expected document is retrieved. This does not fully measure ranking quality, semantic relevance, or the usefulness of the retrieved context.
 
 Future evaluation could include metrics such as **Precision@K, Recall@K, MRR, and NDCG**, along with a comparison of BM25, vector, and hybrid retrieval strategies.
 
-### 3. LLM Answer Evaluation
+# 3. LLM Answer Evaluation
 
 The current project evaluates retrieval but has limited automated evaluation of the final LLM-generated answers.
 
 A future version could use an LLM-as-a-judge framework to evaluate **answer relevance, correctness, completeness, and faithfulness to the retrieved NOAA evidence**.
 
-### 4. No Dedicated Re-ranking Stage
+# 4. No Dedicated Re-ranking Stage
 
 The current retrieval pipeline uses Elasticsearch keyword and dense-vector search but does not include a dedicated cross-encoder or other re-ranking model.
 
 Adding a re-ranking stage could improve the ordering and relevance of the final retrieved documents, especially for more complex queries.
 
-### 5. Query Rewriting
+# 5. Query Rewriting
 
 The current system sends the user's original query to the retrieval layer. Future versions could introduce query rewriting or query expansion to handle ambiguous, conversational, or poorly phrased questions more effectively.
 
-### 6. Local Deployment
+# 6. Local Deployment
 
 The current application is primarily designed for local execution using Docker Compose. A production deployment on a cloud platform would provide better accessibility, scalability, and availability.
 
-### 7. Scalability
+# 7. Scalability
 
 The current architecture has been designed and tested at a relatively small scale. Processing millions of weather records would require additional considerations around embedding generation, Elasticsearch capacity, indexing strategy, caching, and infrastructure scaling.
 
-### 8. Limited Observability
+# 8. Limited Observability
 
 The project currently captures user feedback and provides Grafana-based monitoring. More detailed production observability could include latency tracking, retrieval statistics, token usage, LLM cost, error rates, and search performance.
 
