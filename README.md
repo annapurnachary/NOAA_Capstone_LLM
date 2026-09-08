@@ -218,7 +218,7 @@ Open **`http://localhost:8501`** in your browser web views to execute searches a
 ---
 
 ## sample questions you can ask in the Streamlit UI:
-* Question 1:What happened in January in Kansas?
+* Question 1:Summarize the NOAA storm events in the dataset.
 * Question 2:Where did heavy rainfall cause rivers or creeks to overflow their banks?
 * Question 3: Tell me about drought in Missouri
 * Question 4: Show me reports of subzero wind chills and freezing rain causing ice accumulation

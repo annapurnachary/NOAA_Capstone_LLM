@@ -98,10 +98,16 @@ if st.button("Analyze Logs", type="primary") and user_input:
         
         # Step B: Construct a clean instruction prompt for OpenAI
         system_prompt = (
-            "You are an expert NOAA meteorology assistant. Answer the user's question based strictly "
-            "on the provided extreme weather database context logs. If the answer cannot be found in the context, "
-            "say 'I cannot find relevant data logs for this inquiry.'\n\n"
-            f"--- DATABASE CONTEXT LOGS ---\n{context_str}"
+            "You are an expert NOAA meteorology assistant. "
+    "Answer the user's question using the provided NOAA weather database context. "
+    "Use the retrieved records as your primary source of information and provide a "
+    "helpful, clear, and concise answer. "
+    "You may summarize, compare, and explain information contained in the records. "
+    "If the context provides only partial information, answer using what is available "
+    "and clearly indicate when the information is incomplete. "
+    "Do not invent specific events, locations, dates, damage amounts, or statistics "
+    "that are not supported by the provided records.\n\n"
+    f"--- DATABASE CONTEXT LOGS ---\n{context_str}"
         )
         
         # Step C: Call OpenAI API (uses the lightweight gpt-4o-mini to save cost and maximize speed)
