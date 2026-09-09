@@ -5,7 +5,7 @@ An end-to-end LLM Engineering Capstone Project built for the **DataTalks.Club LL
 ---
 
 ## 🏗️ Project Architecture Layout
-1. **Orchestration Layer/ Ingestion Pipeline:** Run the **Kestra Flow** on-demand to process and bulk-load the raw NOAA weather vector maps directly into the Elasticsearch cluster network.Kestra Workflow Orchestrator running `src/ingest.py`
+1. **Orchestration Layer/ Ingestion Pipeline:** Run the **Kestra Flow** on-demand to process and bulk-load the raw NOAA weather vector maps directly into the Elasticsearch cluster network.Kestra Workflow Orchestrator running `ingest.py`
 2. **Interactive Front-End Layer:** Launch the user interface by running `streamlit run src/app.py` to ask questions and generate expert meteorology advice.
 * **User Interface Front-End:** Streamlit web application dashboard (`src/app.py`)
 * **Vector Search Engine:** Elasticsearch 8.15.0 running keyword (BM25) & Dense Vector (k-NN) matchers
@@ -111,6 +111,18 @@ grafana-dashboard     grafana/grafana:10.0.0                                 "/r
 kestra-orchestrator   kestra/kestra:v0.18.0                                  "docker-entrypoint.s…"   kestra          About a minute ago   Up About a minute   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
 postgres-metrics      postgres:15-alpine                                     "docker-entrypoint.s…"   postgres        About a minute ago   Up About a minute   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
 ```
+* Port mappings and container credentials:
+
+Elasticsearch: http://localhost:9200
+
+
+Kestra UI: http://localhost:8080
+
+
+Grafana UI: http://localhost:3000 (admin / admin)
+
+
+PostgreSQL: localhost:5432 (app_user / project_metrics)
 
 
 ## 3. Run the Kestra workflow for ingesting the NOAA storm records.
@@ -196,7 +208,7 @@ The project maintains a standalone ingestion script for local development/testin
 Install the locked package ranges and run the automated bulk data ingestion pipeline:
 ```bash
 pip3 install -r requirements.txt
-python3 src/ingest.py
+python3 ingest.py
 ```
 *The script will load the embedding models, build vector property maps, and store 2,000 real weather records.*
 
